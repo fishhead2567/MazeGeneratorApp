@@ -35,9 +35,9 @@ Usage:
     To watch the A-Star solver, choose maze -> solve maze
 
 todo:
-    Enable mouse wheel zooming on the maze.
-    Enable panning on the maze.
-    Allow the view to be tied to the player solver.
-    Substantially reduce the hackiness of the rendering ```
+* Enable mouse wheel zooming on the maze.
+* Enable panning on the maze.
+* Allow the view to be tied to the player solver.
+* Substantially reduce the hackiness of the rendering ```
 
     ```
