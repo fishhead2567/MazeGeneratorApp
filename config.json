@@ -1,0 +1,16 @@
+{
+    "maze": {
+        "walls_color": "#FFFFFF",
+        "pawn_color": "#FF0000",
+        "solution_colors": [
+            "#FF0000",
+            "#00FF00",
+            "#0000FF",
+            "#E5DD14",
+            "#FF8B00",
+            "#D31AFF"
+        ],
+        "background_color": "#000000"
+    },
+    "zoom_speed": 1.2
+}
