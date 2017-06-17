@@ -23,7 +23,7 @@ from NewMazeDialog_UI import NewMazeDialog
 # get the maze code
 from Maze import Maze, LoadMaze
 from MazeSolver import InteractiveMazeSolver, AStarMazeSolver
-
+from JsonConfig import CreateOrLoadConfig
 
 class MazeManagerApp(QtGui.QMainWindow):
     def __init__(self):
@@ -32,6 +32,15 @@ class MazeManagerApp(QtGui.QMainWindow):
         # This is always the same
         self.ui=Ui_MainWindow()
         self.ui.setupUi(self)
+
+        #config
+        self.config = CreateOrLoadConfig()
+        print "C", self.config
+
+        # color for the solver
+        self.nextColor = 0
+        # shortcut for color choice
+        self.mNumColors = len(self.config["maze"]["solution_colors"])
 
         # buld the scene which will hold my maze
         self.scene = QtGui.QGraphicsScene()
@@ -42,6 +51,9 @@ class MazeManagerApp(QtGui.QMainWindow):
 
         # accelerate the viewport
         self.ui.MazeView.setViewport(QtOpenGL.QGLWidget())
+
+         # set the scene background color
+        self.scene.setBackgroundBrush(QtGui.QColor(self.config["maze"]["background_color"]))
 
         #enable zoom
         # self.ui.MazeView.setTransformationAnchor(QtGui.QGraphicsView.AnchorUnderMouse)
@@ -65,15 +77,7 @@ class MazeManagerApp(QtGui.QMainWindow):
         self.solverTimer = QtCore.QTimer()
         self.solverTimer.timeout.connect(self.SolverStep)
 
-        # color for the solver
-        self.nextColor = 0
-        self.colors = [
-            (255.0, 0.0, 0.0),
-            (0.0, 255.0, 0.0),
-            (0.0, 0.0, 255.0),
-            (255.0, 255.0, 0.0),
-            (0.0, 255.0, 255.0),
-        ]
+
 
         # bind the menus
         self.ui.actionExit.triggered.connect(QtGui.qApp.quit)
@@ -147,7 +151,7 @@ class MazeManagerApp(QtGui.QMainWindow):
             self.solverIcon = QtGui.QGraphicsRectItem()
             self.solverIcon.setZValue(2)
             self.solverIcon.setRect(0, 0, self.mazeScale / 2.0, self.mazeScale / 2.0)
-            self.solverIcon.setBrush(QtGui.QBrush(QtGui.QColor(100, 100, 0)))
+            self.solverIcon.setBrush(QtGui.QBrush(QtGui.QColor(self.config["maze"]["pawn_color"])))
             self.scene.addItem(self.solverIcon)
             self.solverIcon.setPos(self.solver.mCurrentNode[1] * self.mazeScale  + self.mazeScale/4.0,
                                    self.solver.mCurrentNode[0] * self.mazeScale  + self.mazeScale/4.0)
@@ -184,9 +188,9 @@ class MazeManagerApp(QtGui.QMainWindow):
                 if len(current_path) > 1:
                     self.solverPath = QtGui.QGraphicsPathItem()
                     self.solverPath.setPos(0,0)
-                    color = self.colors[self.nextColor]
-                    self.nextColor = (self.nextColor + 1 ) % len(self.colors)
-                    pen = QtGui.QPen(QtGui.QColor(color[0], color[1], color[2]))
+                    color = self.config["maze"]["solution_colors"][self.nextColor]
+                    self.nextColor = (self.nextColor + 1 ) % self.mNumColors
+                    pen = QtGui.QPen(QtGui.QColor(color))
                     self.solverPath.setPen(pen)
                     # self.solverPath.setBrush(QtGui.QBrush(QtGui.QColor(color[0], color[1], color[2])))
 
@@ -244,12 +248,15 @@ class MazeManagerApp(QtGui.QMainWindow):
 
 
     def wheelEvent(self, event):
+
         print "WHEEL",
         if event.delta() > 0:
             print "in"
+            self.ui.MazeView.scale(self.config["zoom_speed"], self.config["zoom_speed"])
         elif event.delta() < 0:
             print "out"
-
+            self.ui.MazeView.scale(1.0 / self.config["zoom_speed"], 1.0 / self.config["zoom_speed"])
+        return True
     # load default maze
     # def loadDefaultMaze(self):
         # print "load default maze"
@@ -280,7 +287,10 @@ class MazeManagerApp(QtGui.QMainWindow):
             self.mazeScale = min(self.mazeScale, self.scene.sceneRect().height() / self.maze.height)
             # maze font
             font=QtGui.QFont('White Rabbit')
-            font.setPointSize(self.mazeScale / 3.0)
+            font.setPointSize(self.mazeScale * .9)
+
+            wallPen = QtGui.QPen(QtGui.QColor(self.config["maze"]["walls_color"]))
+
 
             # add the maze to the scene. Just for now, do the processing here
             for row in xrange(self.maze.height):
@@ -299,46 +309,46 @@ class MazeManagerApp(QtGui.QMainWindow):
                     borders = self.maze.GetBorders([row,col])
                     for border in xrange(len(borders)):
                         if borders[border] < 1:
-
-                            if border == 0:
+                            line = None
+                            if border in [0,1,2,3]:
                                 line = QtGui.QGraphicsLineItem()
+                                line.setPen(wallPen)
+                            if border == 0:
                                 line.setLine(col * self.mazeScale, row * self.mazeScale,
                                              (col + 1) * self.mazeScale, (row + 0) * self.mazeScale)
                                 self.mazeLines.append(line)
 
                             elif border == 1:
-                                line = QtGui.QGraphicsLineItem()
                                 line.setLine((col + 1) * self.mazeScale, (row + 0) * self.mazeScale,
                                              (col + 1) * self.mazeScale, (row + 1) * self.mazeScale)
                                 self.mazeLines.append(line)
 
                             elif border == 2:
-                                line = QtGui.QGraphicsLineItem()
                                 line.setLine((col + 0) * self.mazeScale, (row + 1) * self.mazeScale,
                                              (col + 1) * self.mazeScale, (row + 1) * self.mazeScale)
                                 self.mazeLines.append(line)
 
                             elif border == 3:
-                                line = QtGui.QGraphicsLineItem()
                                 line.setLine((col + 0) * self.mazeScale, (row + 0) * self.mazeScale,
                                              (col + 0) * self.mazeScale, (row + 1) * self.mazeScale)
                                 self.mazeLines.append(line)
                             """
                             """
 
-            start = QtGui.QGraphicsTextItem('St')
-            start.setFont(font)
-            start.setDefaultTextColor(QtGui.QColor(255, 0, 0))
-            start.setPos(self.maze.start_cell[1] * self.mazeScale, self.maze.start_cell[0] * self.mazeScale)
-            start.setZValue(1)
-            self.mazeLines.append(start)
+            # Use large squares for start and end
+            text = QtGui.QGraphicsTextItem('S')
+            text.setFont(font)
+            text.setDefaultTextColor(QtGui.QColor(255, 0, 255))
+            text.setPos(self.maze.start_cell[1] * self.mazeScale, self.maze.start_cell[0] * self.mazeScale - self.mazeScale / 2.0)
+            text.setZValue(1.0)
+            self.mazeLines.append(text)
 
-            end = QtGui.QGraphicsTextItem('En')
-            end.setFont(font)
-            end.setDefaultTextColor(QtGui.QColor(0, 0, 255))
-            end.setPos(self.maze.end_cell[1] * self.mazeScale, self.maze.end_cell[0] * self.mazeScale)
-            end.setZValue(1.0)
-            self.mazeLines.append(end)
+            text = QtGui.QGraphicsTextItem('E')
+            text.setFont(font)
+            text.setDefaultTextColor(QtGui.QColor(0, 0, 255))
+            text.setPos(self.maze.end_cell[1] * self.mazeScale, self.maze.end_cell[0] * self.mazeScale- self.mazeScale / 2.0)
+            text.setZValue(1.0)
+            self.mazeLines.append(text)
 
             # add all the lines to the maze
             for item in self.mazeLines:

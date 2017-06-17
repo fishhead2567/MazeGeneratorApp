@@ -3,7 +3,7 @@ MazeGeneratorApp
 
 This is a small QT GUI app created to generate, visualize, and solve mazes.
 
-Dependancies:
+Dependencies:
 * PYQT 4.x (4.8 tested)
 * Numpy
 
@@ -36,4 +36,10 @@ Todo:
 * Enable mouse wheel zooming on the maze.
 * Enable panning on the maze.
 * Allow the view to be tied to the player solver.
-* Substantially reduce the hackiness of the rendering 
+* Substantially reduce the hackiness of the rendering
+
+Changelog
+---
+**V.1**
+
+-Initial commit. 
