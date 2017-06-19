@@ -70,8 +70,9 @@ class Vertex(object):
 
 # face class for easy searching
 class Face(object):
-    def __init__(self, vertex_indices):
+    def __init__(self, vertex_indices, texture_vertex_indices = []):
         self.vertex_indices = np.array(vertex_indices)
+        self.texture_vertex_indices = texture_vertex_indices
 
     def _isEqual(self, other):
         if type(self) != type(other):
@@ -101,8 +102,14 @@ class Face(object):
 
     def objRepr(self):
         theRepr = "f "
-        for vertex in self.vertex_indices:
-            theRepr += "%d " % vertex
+        for index in xrange(len(self.vertex_indices)):
+            if len(self.texture_vertex_indices) > 0:
+                theRepr += "%d/%d " % (
+                    self.vertex_indices[index],
+                    self.texture_vertex_indices[index])
+            else:
+                theRepr += "%d " % self.vertex_indices[index]
+
         return theRepr
 
 def MazeToObj(maze, cell_width, wall_width, wall_height,
@@ -231,37 +238,43 @@ def MazeToObj(maze, cell_width, wall_width, wall_height,
                             Face([vertex_indices[0],
                                   vertex_indices[1],
                                   vertex_indices[2],
-                                  vertex_indices[3],]),
+                                  vertex_indices[3],],
+                                 [3,2,1,0]),
 
                             # south face
                             Face([vertex_indices[0],
                                   vertex_indices[1],
                                   vertex_indices[5],
-                                  vertex_indices[4],]),
+                                  vertex_indices[4],],
+                                 [2,3,1,0]),
 
                             # east face
                             Face([vertex_indices[1],
                                   vertex_indices[2],
                                   vertex_indices[6],
-                                  vertex_indices[5],]),
+                                  vertex_indices[5]],
+                                 [2,3,1,0]),
 
                             # north face
                             Face([vertex_indices[2],
                                   vertex_indices[3],
                                   vertex_indices[7],
-                                  vertex_indices[6],]),
+                                  vertex_indices[6],],
+                                 [2,3,1,0]),
 
                             # west
                             Face([vertex_indices[3],
                                   vertex_indices[0],
                                   vertex_indices[4],
-                                  vertex_indices[7],]),
+                                  vertex_indices[7],],
+                                 [2,3,1,0]),
 
                             # top face
                             Face([vertex_indices[4],
                                   vertex_indices[5],
                                   vertex_indices[6],
-                                  vertex_indices[7],]),
+                                  vertex_indices[7],],
+                                 [2,3,1,0]),
 
                         ]
 
@@ -273,9 +286,18 @@ def MazeToObj(maze, cell_width, wall_width, wall_height,
 
         # output all the vertices and faces to a file
         with open(file_name, "w+") as fp:
+
+            # vertices
             for vertex in all_vertices:
                 fp.write(vertex.objRepr() + "\n")
 
+            #texture coordinates
+            fp.write("""
+vt 0 0
+vt 1 0
+vt 0 1
+vt 1 1
+""")
             fp.write("\n")
             for face in all_faces:
                 fp.write(face.objRepr() + "\n")
