@@ -133,6 +133,8 @@ def MazeToObj(maze, cell_width, wall_width, wall_height,
         for row in xrange(maze.height):
         # for row in [0]:
             for column in xrange(maze.width):
+                # a note.  ithink objs are y up.
+
                 if open_exits and maze.IsEnd(row, column) or maze.IsStart(row, column):
                     skip_first = True
                 else:
@@ -164,28 +166,31 @@ def MazeToObj(maze, cell_width, wall_width, wall_height,
                         vertices = []
                         # north wall
                         if border == 0:
-
                             # the 8 vertices are located above the cell
                             for height in [0, wall_height]:
                                 vertices += [
-                                    Vertex(cell_top_x, cell_top_y, height),
+                                    Vertex(cell_top_x, height, cell_top_y),
                                     # add wall width?
-                                    Vertex(cell_top_x + cell_width, cell_top_y, height),
-                                    Vertex(cell_top_x + cell_width, cell_top_y- wall_width, height),
-                                    Vertex(cell_top_x, cell_top_y - wall_width, height),
+                                    Vertex(cell_top_x + cell_width, height, cell_top_y),
+                                    Vertex(cell_top_x + cell_width, height, cell_top_y- wall_width),
+                                    Vertex(cell_top_x,  height, cell_top_y - wall_width),
                                 ]
                         # east wall
                         elif border == 1:
                             for height in [0, wall_height]:
                                 vertices += [
                                     Vertex(cell_top_x + cell_width,
-                                           cell_top_y + cell_width, height),
+                                            height,
+                                           cell_top_y + cell_width),
                                     Vertex(cell_top_x + cell_width + wall_width,
-                                           cell_top_y + cell_width, height),
+                                            height,
+                                           cell_top_y + cell_width),
                                     Vertex(cell_top_x + cell_width + wall_width,
-                                           cell_top_y, height),
+                                            height,
+                                           cell_top_y),
                                     Vertex(cell_top_x + cell_width,
-                                           cell_top_y, height),
+                                            height,
+                                           cell_top_y),
                                 ]
                         # south  wall
                         elif border == 2:
@@ -194,29 +199,33 @@ def MazeToObj(maze, cell_width, wall_width, wall_height,
                             for height in [0, wall_height]:
                                 vertices += [
                                     Vertex(cell_top_x,
-                                           cell_top_y + cell_width + wall_width,
-                                           height),
+                                            height,
+                                           cell_top_y + cell_width + wall_width),
                                     Vertex(cell_top_x + cell_width,
-                                           cell_top_y + cell_width + wall_width,
-                                           height),
+                                            height,
+                                           cell_top_y + cell_width + wall_width),
                                     Vertex(cell_top_x + cell_width,
-                                           cell_top_y + cell_width,
-                                           height),
+                                            height,
+                                           cell_top_y + cell_width),
                                     Vertex(cell_top_x,
-                                           cell_top_y + cell_width,
-                                           height),
+                                            height,
+                                           cell_top_y + cell_width),
                                 ]
                         elif border == 3:
                             for height in [0, wall_height]:
                                 vertices += [
                                     Vertex(cell_top_x - wall_width,
-                                           cell_top_y + cell_width, height),
+                                            height,
+                                           cell_top_y + cell_width),
                                     Vertex(cell_top_x,
-                                           cell_top_y + cell_width, height),
+                                            height,
+                                           cell_top_y + cell_width),
                                     Vertex(cell_top_x,
-                                           cell_top_y, height),
+                                            height,
+                                           cell_top_y),
                                     Vertex(cell_top_x - wall_width,
-                                           cell_top_y, height)
+                                            height,
+                                           cell_top_y)
                                 ]
 
                         # print vertices
