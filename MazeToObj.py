@@ -4,8 +4,8 @@ This file does exactly what it claims to, convert a maze to an obj
 """
 
 import numpy as np
-
 from Maze import Maze, LoadMaze
+from copy import copy
 
 # define a vertex class for easy searching
 class Vertex(object):
@@ -121,7 +121,16 @@ def MazeToObj(maze, cell_width, wall_width, wall_height,
         maze_width_meters = (cell_width + wall_width) * maze.width + wall_width
         maze_length_meters = (cell_width + wall_width) * maze.height + wall_width
         maze_width_offset = -maze_width_meters / 2.0
-        maze_length_offset = -maze_width_meters / 2.0
+        maze_length_offset = -maze_length_meters / 2.0
+
+        print "maze dimensions: %d x %d cells (total: %d). %0.4f x %0.4f meters." %(
+            maze.width, maze.height, maze.width * maze.height,
+            maze_width_meters, maze_length_meters
+        )
+
+        print "Up to %d vertices will be generated" % (
+            maze.width * maze.height * 2 * 8
+        )
 
         if simplify:
             raise NotImplementedError("Haven't gotten around to this yet")
@@ -130,8 +139,19 @@ def MazeToObj(maze, cell_width, wall_width, wall_height,
         all_vertices = []
         all_faces = []
 
+        # there are 8 uv coords
+        #     the 4 corners normally
+        #     and 2 short ones per axis for small faces
+        #     5 and 6 are 0, short and 1, short
+        #     7 and 8 are short,0 and short, 1
+
+        v_small_faces = (wall_width / cell_width)
+
+
         for row in xrange(maze.height):
         # for row in [0]:
+            print "row %d of %d" % (row, maze.height)
+
             for column in xrange(maze.width):
                 # a note.  ithink objs are y up.
 
@@ -142,8 +162,8 @@ def MazeToObj(maze, cell_width, wall_width, wall_height,
                 skipped_first = False
         #   for column in [0]:
                 # get the top corner
-                cell_top_x = column * cell_width + wall_width + maze_width_offset
-                cell_top_y = row * cell_width + wall_width + maze_length_offset
+                cell_top_x = column * (cell_width + wall_width) + maze_width_offset
+                cell_top_y = row * (cell_width + wall_width) + maze_length_offset
 
                 cell_borders = maze.GetBorders(row, column)
 
@@ -157,11 +177,16 @@ def MazeToObj(maze, cell_width, wall_width, wall_height,
                     if border in skip_borders:
                         continue
 
+
                     # if there is a wall here
                     if cell_borders[border] < 1:
-                        if skip_first and not skipped_first:
+                        if skip_first and not skipped_first and cell_borders[border] <0:
                             skipped_first = True
                             continue
+
+                        # setup a basic uv set which we will ajdust later
+                        base_uvs = [3,4,2,1]
+                        uvs = []
 
                         vertices = []
                         # north wall
@@ -175,6 +200,16 @@ def MazeToObj(maze, cell_width, wall_width, wall_height,
                                     Vertex(cell_top_x + cell_width, height, cell_top_y- wall_width),
                                     Vertex(cell_top_x,  height, cell_top_y - wall_width),
                                 ]
+
+                            # adjust length if we're first row and there is
+                            # no left wall
+                            if row == 0:
+                                vertices[0].coords[0] -= wall_width
+                                vertices[3].coords[0] -= wall_width
+                                vertices[4].coords[0] -= wall_width
+                                vertices[7].coords[0] -= wall_width
+
+
                         # east wall
                         elif border == 1:
                             for height in [0, wall_height]:
@@ -187,11 +222,13 @@ def MazeToObj(maze, cell_width, wall_width, wall_height,
                                            cell_top_y + cell_width),
                                     Vertex(cell_top_x + cell_width + wall_width,
                                             height,
-                                           cell_top_y),
+                                           cell_top_y- wall_width),
                                     Vertex(cell_top_x + cell_width,
                                             height,
-                                           cell_top_y),
+                                           cell_top_y- wall_width),
                                 ]
+
+
                         # south  wall
                         elif border == 2:
 
@@ -211,6 +248,18 @@ def MazeToObj(maze, cell_width, wall_width, wall_height,
                                             height,
                                            cell_top_y + cell_width),
                                 ]
+
+                            # if there is no west wall then we need to
+                            # extend this to cover corners
+                            if cell_borders[3] >=1:
+                                vertices[0].coords[0] -= wall_width
+                                vertices[3].coords[0] -= wall_width
+                                vertices[4].coords[0] -= wall_width
+                                vertices[7].coords[0] -= wall_width
+
+
+
+                        # west wall
                         elif border == 3:
                             for height in [0, wall_height]:
                                 vertices += [
@@ -222,12 +271,67 @@ def MazeToObj(maze, cell_width, wall_width, wall_height,
                                            cell_top_y + cell_width),
                                     Vertex(cell_top_x,
                                             height,
-                                           cell_top_y),
+                                           cell_top_y - wall_width),
                                     Vertex(cell_top_x - wall_width,
                                             height,
-                                           cell_top_y)
+                                           cell_top_y- wall_width)
                                 ]
 
+                        # setup uvs
+                        if border == 0 or border == 2:
+                            # bottom
+                            uvs.append(copy(base_uvs))
+                            uvs[-1][0] = 5
+                            uvs[-1][1] = 6
+
+                            # south
+                            uvs.append(copy(base_uvs))
+
+                            # east
+                            uvs.append(copy(base_uvs))
+                            uvs[-1][1] = 8
+                            uvs[-1][2] = 7
+
+                            #north
+                            uvs.append(copy(base_uvs))
+
+                            # west
+                            uvs.append(copy(base_uvs))
+                            uvs[-1][1] = 8
+                            uvs[-1][2] = 7
+
+                            # top
+                            uvs.append(copy(base_uvs))
+                            uvs[-1][0] = 5
+                            uvs[-1][1] = 6
+
+                        elif border == 1 or border == 3:
+                            uvs.append(copy(base_uvs))
+                            uvs[-1][1] = 8
+                            uvs[-1][2] = 7
+
+                            # south
+                            uvs.append(copy(base_uvs))
+                            uvs[-1][1] = 8
+                            uvs[-1][2] = 7
+
+                            # east
+                            uvs.append(copy(base_uvs))
+
+
+                            #north
+                            uvs.append(copy(base_uvs))
+                            uvs[-1][1] = 8
+                            uvs[-1][2] = 7
+
+
+                            # west
+                            uvs.append(copy(base_uvs))
+
+                            # top
+                            uvs.append(copy(base_uvs))
+                            uvs[-1][1] = 8
+                            uvs[-1][2] = 7
                         # print vertices
 
                         #add the veritces to the list
@@ -244,46 +348,46 @@ def MazeToObj(maze, cell_width, wall_width, wall_height,
                         # setup the faces manually
                         faces = [
                             # bottom face
-                            Face([vertex_indices[0],
-                                  vertex_indices[1],
+                            Face([vertex_indices[3],
                                   vertex_indices[2],
-                                  vertex_indices[3],],
-                                 [3,2,1,0]),
+                                  vertex_indices[1],
+                                  vertex_indices[0],],
+                                 uvs[0][::-1]),
 
                             # south face
                             Face([vertex_indices[0],
                                   vertex_indices[1],
                                   vertex_indices[5],
                                   vertex_indices[4],],
-                                 [2,3,1,0]),
+                                 uvs[1]),
 
                             # east face
                             Face([vertex_indices[1],
                                   vertex_indices[2],
                                   vertex_indices[6],
                                   vertex_indices[5]],
-                                 [2,3,1,0]),
+                                 uvs[2]),
 
                             # north face
                             Face([vertex_indices[2],
                                   vertex_indices[3],
                                   vertex_indices[7],
                                   vertex_indices[6],],
-                                 [2,3,1,0]),
+                                 uvs[3]),
 
                             # west
                             Face([vertex_indices[3],
                                   vertex_indices[0],
                                   vertex_indices[4],
                                   vertex_indices[7],],
-                                 [2,3,1,0]),
+                                 uvs[4]),
 
                             # top face
                             Face([vertex_indices[4],
                                   vertex_indices[5],
                                   vertex_indices[6],
                                   vertex_indices[7],],
-                                 [2,3,1,0]),
+                                 uvs[5]),
 
                         ]
 
@@ -306,13 +410,23 @@ vt 0 0
 vt 1 0
 vt 0 1
 vt 1 1
-""")
+vt 0 %0.4f
+vt 1 %0.4f
+vt %0.4f 0
+vt %0.4f 1
+""" % (v_small_faces, v_small_faces, v_small_faces, v_small_faces))
             fp.write("\n")
+
             for face in all_faces:
                 fp.write(face.objRepr() + "\n")
 
+        print " Generated %d vertices and %d faces " % (
+            len(all_vertices), len(all_faces)
+        )
 if __name__ == "__main__":
+    #m = LoadMaze("Difficult1.maze")
+    #MazeToObj(m, 1, .1, 1, "HardMaze.obj", open_exits=True)
     m = LoadMaze("TestMaze1.maze")
-    #m.PrintMaze()
-    MazeToObj(m, 1, .1, 1, "TestMaze1.obj", open_exits=True)
+    MazeToObj(m, 1, .1, 1, "EasyMaze1.obj", open_exits=True)
 
+    print "generated new file"
