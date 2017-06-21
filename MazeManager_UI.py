@@ -169,12 +169,14 @@ class MazeManagerApp(QtGui.QMainWindow):
             self.illustrateSolverPath = True
             self.solver = AStarMazeSolver(self.maze, 0)
             self.solverPath = None
+            self.statusBar().showMessage("Solving Maze")
 
         self.SolverStep()
 
     def SolverStep(self):
         if self.solverRunning:
             self.solver.Step()
+
             if self.solver.Finished():
                 self.ResetSolver()
 
@@ -185,6 +187,8 @@ class MazeManagerApp(QtGui.QMainWindow):
                     self.scene.removeItem(self.solverPath)
 
                 current_path = copy(self.solver.mCurrentPath)
+                self.statusBar().showMessage("Solving Maze: %d steps" % self.solver.mStep)
+
                 if len(current_path) > 1:
                     self.solverPath = QtGui.QGraphicsPathItem()
                     self.solverPath.setPos(0,0)
@@ -272,6 +276,7 @@ class MazeManagerApp(QtGui.QMainWindow):
                 self.ResetMaze()
             self.mazeFile = mazeFile
             self.maze = LoadMaze(self.mazeFile)
+            self.statusBar().showMessage("Maze Loaded",5000)
             self.RenderMaze()
 
 

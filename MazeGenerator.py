@@ -215,6 +215,8 @@ class MazeGenerator(object):
             if self.mVerbosity > 0:
                 print "Random A-Star %d,%d to %d, %d" % (test_start[0], test_start[1],
                                                     test_end[0], test_end[1] )
+            theMaze.start_cell = test_start
+            theMaze.end_cell = test_end
 
             solver = AStarMazeSolver(theMaze)
             while not solver.Finished():

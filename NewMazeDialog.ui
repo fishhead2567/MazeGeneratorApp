@@ -105,6 +105,15 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>mazeWidthSpin</tabstop>
+  <tabstop>mazeHeightSpin</tabstop>
+  <tabstop>mazeGeneratorBox</tabstop>
+  <tabstop>goalPlacementBox</tabstop>
+  <tabstop>mazeFileName</tabstop>
+  <tabstop>maxIterationsSpin</tabstop>
+  <tabstop>buttonBox</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

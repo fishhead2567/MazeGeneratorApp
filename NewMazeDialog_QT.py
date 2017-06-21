@@ -85,6 +85,12 @@ class Ui_NewMaze_Dialog(object):
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("accepted()")), NewMaze_Dialog.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("rejected()")), NewMaze_Dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(NewMaze_Dialog)
+        NewMaze_Dialog.setTabOrder(self.mazeWidthSpin, self.mazeHeightSpin)
+        NewMaze_Dialog.setTabOrder(self.mazeHeightSpin, self.mazeGeneratorBox)
+        NewMaze_Dialog.setTabOrder(self.mazeGeneratorBox, self.goalPlacementBox)
+        NewMaze_Dialog.setTabOrder(self.goalPlacementBox, self.mazeFileName)
+        NewMaze_Dialog.setTabOrder(self.mazeFileName, self.maxIterationsSpin)
+        NewMaze_Dialog.setTabOrder(self.maxIterationsSpin, self.buttonBox)
 
     def retranslateUi(self, NewMaze_Dialog):
         NewMaze_Dialog.setWindowTitle(_translate("NewMaze_Dialog", "New Maze", None))

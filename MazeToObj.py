@@ -1,7 +1,15 @@
 """
+MazeToObj.py
 
-This file does exactly what it claims to, convert a maze to an obj
+This file does exactly what it claims to, convert a maze or set of mazes to obj. Accepts wildcards
+
+usage:
+    MazeToObj.py <cell_size> <wall_thickness> <wall_height> <maze1> [<mazes>...]
+
 """
+
+from docopt import docopt
+import glob
 
 import numpy as np
 from Maze import Maze, LoadMaze
@@ -424,9 +432,19 @@ vt %0.4f 1
             len(all_vertices), len(all_faces)
         )
 if __name__ == "__main__":
-    #m = LoadMaze("Difficult1.maze")
-    #MazeToObj(m, 1, .1, 1, "HardMaze.obj", open_exits=True)
-    m = LoadMaze("TestMaze1.maze")
-    MazeToObj(m, 1, .1, 1, "EasyMaze1.obj", open_exits=True)
+    arguments = docopt(__doc__, version='Naval Fate 2.0')
+    print arguments
+    total_mazes = [arguments["<maze1>"]] + arguments["<mazes>"]
+    csize = float(arguments["<cell_size>"])
+    wthick = float(arguments["<wall_thickness>"])
+    wheight = float(arguments["<wall_height>"])
+    for item in total_mazes:
+        files = glob.glob(item)
+        for filename in files:
+            new_filename = filename.replace(".maze",".obj")
+            m = LoadMaze(filename)
+            MazeToObj(m, csize, wthick, wheight, new_filename, open_exits=True)
+    #m = LoadMaze("TestMaze1.maze")
+    #MazeToObj(m, 1, .1, 1, "EasyMaze1.obj", open_exits=True)
 
     print "generated new file"
