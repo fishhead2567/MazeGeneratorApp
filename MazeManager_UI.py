@@ -21,6 +21,8 @@ from MazeManager_QT import Ui_MainWindow
 from NewMazeDialog_UI import NewMazeDialog
 from MazeToObjDialog_UI import MazeToObjDialog
 
+# helper for icon
+from IconMaker import SetAppIcon
 # get the maze code
 from Maze import Maze, LoadMaze
 from MazeSolver import InteractiveMazeSolver, AStarMazeSolver
@@ -34,6 +36,9 @@ class MazeManagerApp(QtGui.QMainWindow):
         # This is always the same
         self.ui=Ui_MainWindow()
         self.ui.setupUi(self)
+
+        # set the icon
+        SetAppIcon(self)
 
         #config
         self.config = CreateOrLoadConfig()
@@ -306,6 +311,8 @@ class MazeManagerApp(QtGui.QMainWindow):
 
         if filename == 0 or filename == "":
             filename = str(self.mazeFile).replace(".maze",".obj")
+
+        self.statusBar().showMessage("Saving OBJ", 5000)
 
         cell_size = data[1]
         wall_thickness = data[2]
