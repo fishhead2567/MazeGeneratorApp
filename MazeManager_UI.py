@@ -19,11 +19,13 @@ from PyQt4 import QtCore,QtGui, QtOpenGL
 # Get The Compiled QT GUI
 from MazeManager_QT import Ui_MainWindow
 from NewMazeDialog_UI import NewMazeDialog
+from MazeToObjDialog_UI import MazeToObjDialog
 
 # get the maze code
 from Maze import Maze, LoadMaze
 from MazeSolver import InteractiveMazeSolver, AStarMazeSolver
 from JsonConfig import CreateOrLoadConfig
+from MazeToObj import MazeToObj
 
 class MazeManagerApp(QtGui.QMainWindow):
     def __init__(self):
@@ -73,6 +75,9 @@ class MazeManagerApp(QtGui.QMainWindow):
         self.illustrateSolverPath = None
         self.solverInteractive = False
 
+        # dialog remembers where it opened last file from
+        self.last_maze_dir = None
+
         # timer for the solver
         self.solverTimer = QtCore.QTimer()
         self.solverTimer.timeout.connect(self.SolverStep)
@@ -85,13 +90,15 @@ class MazeManagerApp(QtGui.QMainWindow):
         self.ui.actionRunMaze.triggered.connect(self.StartManualRun)
         self.ui.actionSolve_Maze.triggered.connect(self.StartAStarRun)
         self.ui.actionNew_Maze.triggered.connect(self.newMaze)
+        self.ui.actionExport_to_Obj.triggered.connect(self.MazeToObj)
+
 
     # produce a new maze from the dialog
     def newMaze(self):
         self.popup = NewMazeDialog()
         self.popup.exec_()
         data =  self.popup.GetData()
-
+        self.last_maze_dir = None
         self.ResetMaze()
         filename = data[0]
 
@@ -268,7 +275,12 @@ class MazeManagerApp(QtGui.QMainWindow):
 
 
     def LoadMazeFromFile(self):
-        fd = QtGui.QFileDialog(self, directory=os.path.dirname(os.path.realpath(__file__)))
+        if self.last_maze_dir is None:
+            directory = os.path.dirname(os.path.realpath(__file__))
+        else:
+            directory = self.last_maze_dir
+
+        fd = QtGui.QFileDialog(self, directory=directory)
         mazeFile = fd.getOpenFileName()
         if isfile(mazeFile):
             if self.mazeLoaded:
@@ -276,8 +288,39 @@ class MazeManagerApp(QtGui.QMainWindow):
                 self.ResetMaze()
             self.mazeFile = mazeFile
             self.maze = LoadMaze(self.mazeFile)
+            self.last_maze_dir =os.path.dirname(str(self.mazeFile))
             self.statusBar().showMessage("Maze Loaded",5000)
             self.RenderMaze()
+
+
+    def MazeToObj(self):
+        if self.mazeFile is None:
+            self.statusBar().showMessage("Load a Maze First!", 5000)
+            return False
+
+        self.popup = MazeToObjDialog()
+        self.popup.exec_()
+        data =  self.popup.GetData()
+
+        filename = data[0]
+
+        if filename == 0 or filename == "":
+            filename = str(self.mazeFile).replace(".maze",".obj")
+
+        cell_size = data[1]
+        wall_thickness = data[2]
+        wall_height = data[3]
+        open_exits = data[4]
+
+        success = MazeToObj(self.maze,
+                  cell_size, wall_thickness, wall_height,
+                  filename, open_exits)
+
+        self.popup = None
+        if success:
+            self.statusBar().showMessage("Obj saved to: %s" % filename, 5000)
+        else:
+            self.statusBar().showMessage("Failed to save OBJ file", 5000)
 
 
     # load and render a maze

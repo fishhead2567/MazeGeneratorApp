@@ -37,14 +37,17 @@ Todo:
 * Enable panning on the maze.
 * Allow the view to be tied to the player solver.
 * Substantially reduce the hackiness of the rendering
-* Integrate MazeToObj with the visualizer
 
 Changelog
 ---
+**V.12**
+
+-Added option to export maze to OBJ in UI integrated CLI tool
+
+
 **V.11**
 
 -Added command line options to convert a maze to an obj file for use with 3d engines.
-
 
 **V.1**
 

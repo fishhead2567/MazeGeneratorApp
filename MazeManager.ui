@@ -69,6 +69,8 @@
     </property>
     <addaction name="actionRunMaze"/>
     <addaction name="actionSolve_Maze"/>
+    <addaction name="separator"/>
+    <addaction name="actionExport_to_Obj"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuSolver"/>
@@ -97,6 +99,11 @@
   <action name="actionSolve_Maze">
    <property name="text">
     <string>Solve Maze...</string>
+   </property>
+  </action>
+  <action name="actionExport_to_Obj">
+   <property name="text">
+    <string>Export to Obj</string>
    </property>
   </action>
  </widget>

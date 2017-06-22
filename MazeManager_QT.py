@@ -25,7 +25,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(789, 558)
+        MainWindow.resize(709, 558)
         self.centralwidget = QtGui.QWidget(MainWindow)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -46,7 +46,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.MazeView)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 789, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 709, 21))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -66,12 +66,16 @@ class Ui_MainWindow(object):
         self.actionRunMaze.setObjectName(_fromUtf8("actionRunMaze"))
         self.actionSolve_Maze = QtGui.QAction(MainWindow)
         self.actionSolve_Maze.setObjectName(_fromUtf8("actionSolve_Maze"))
+        self.actionExport_to_Obj = QtGui.QAction(MainWindow)
+        self.actionExport_to_Obj.setObjectName(_fromUtf8("actionExport_to_Obj"))
         self.menuFile.addAction(self.actionNew_Maze)
         self.menuFile.addAction(self.actionOpenMaze)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionExit)
         self.menuSolver.addAction(self.actionRunMaze)
         self.menuSolver.addAction(self.actionSolve_Maze)
+        self.menuSolver.addSeparator()
+        self.menuSolver.addAction(self.actionExport_to_Obj)
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuSolver.menuAction())
 
@@ -87,4 +91,5 @@ class Ui_MainWindow(object):
         self.actionExit.setText(_translate("MainWindow", "Exit", None))
         self.actionRunMaze.setText(_translate("MainWindow", "Run Maze", None))
         self.actionSolve_Maze.setText(_translate("MainWindow", "Solve Maze...", None))
+        self.actionExport_to_Obj.setText(_translate("MainWindow", "Export to Obj", None))
 

@@ -406,14 +406,15 @@ def MazeToObj(maze, cell_width, wall_width, wall_height,
 
 
         # output all the vertices and faces to a file
-        with open(file_name, "w+") as fp:
+        try:
+            with open(file_name, "w+") as fp:
 
-            # vertices
-            for vertex in all_vertices:
-                fp.write(vertex.objRepr() + "\n")
+                # vertices
+                for vertex in all_vertices:
+                    fp.write(vertex.objRepr() + "\n")
 
-            #texture coordinates
-            fp.write("""
+                #texture coordinates
+                fp.write("""
 vt 0 0
 vt 1 0
 vt 0 1
@@ -423,14 +424,19 @@ vt 1 %0.4f
 vt %0.4f 0
 vt %0.4f 1
 """ % (v_small_faces, v_small_faces, v_small_faces, v_small_faces))
-            fp.write("\n")
+                fp.write("\n")
 
-            for face in all_faces:
-                fp.write(face.objRepr() + "\n")
+                for face in all_faces:
+                    fp.write(face.objRepr() + "\n")
 
-        print " Generated %d vertices and %d faces " % (
-            len(all_vertices), len(all_faces)
-        )
+            print " Generated %d vertices and %d faces " % (
+                len(all_vertices), len(all_faces)
+            )
+            return True
+
+        except:
+            return False
+
 if __name__ == "__main__":
     arguments = docopt(__doc__, version='Naval Fate 2.0')
     print arguments
