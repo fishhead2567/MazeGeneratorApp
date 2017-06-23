@@ -38,9 +38,22 @@ class NewMazeDialog(QtGui.QDialog):
         for goal in self.goalPlacements:
             self.ui.goalPlacementBox.addItem(goal)
 
+        # disable the spinboxes by deafult
+        self.ui.branchHorizontalSpin.setDisabled(True)
+        self.ui.branchVerticalSpin.setDisabled(True)
+
         # connect the on changed
         self.ui.goalPlacementBox.currentIndexChanged.connect(self.ChangeGoalPlacement)
         self.ui.maxIterationsSpin.valueChanged.connect(self.ChangeMaxSteps)
+        self.ui.branchBiasCheck.stateChanged.connect(self.EnableDisableBias)
+
+    def EnableDisableBias(self):
+        if self.ui.branchBiasCheck.isChecked():
+            self.ui.branchHorizontalSpin.setDisabled(False)
+            self.ui.branchVerticalSpin.setDisabled(False)
+        else:
+            self.ui.branchHorizontalSpin.setDisabled(True)
+            self.ui.branchVerticalSpin.setDisabled(True)
 
     def ChangeMaxSteps(self):
         iterations = self.ui.maxIterationsSpin.value()
@@ -56,6 +69,17 @@ class NewMazeDialog(QtGui.QDialog):
             self.generators[generator].SetEndpointMethod(self.goalPlacements[placement])
 
     def GetData(self):
+        """
+            filename,
+            mazewidth
+            mazeheight
+            generators,
+            bias?
+            horizontalbias
+            verticalbias
+
+        :return:
+        """
         genText = str(self.ui.mazeGeneratorBox.currentText())
         print "GT - GenTextData", genText
         return (
@@ -63,6 +87,9 @@ class NewMazeDialog(QtGui.QDialog):
             self.ui.mazeWidthSpin.value(),
             self.ui.mazeHeightSpin.value(),
             self.generators[genText],
+            self.ui.branchBiasCheck.isChecked(),
+            self.ui.branchHorizontalSpin.value(),
+            self.ui.branchVerticalSpin.value(),
         )
 
 

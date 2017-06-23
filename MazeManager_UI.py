@@ -29,6 +29,8 @@ from MazeSolver import InteractiveMazeSolver, AStarMazeSolver
 from JsonConfig import CreateOrLoadConfig
 from MazeToObj import MazeToObj
 
+DEFAULT_MAZE_DIR = "mazes"
+
 class MazeManagerApp(QtGui.QMainWindow):
     def __init__(self):
         QtGui.QWidget.__init__(self)
@@ -97,6 +99,9 @@ class MazeManagerApp(QtGui.QMainWindow):
         self.ui.actionNew_Maze.triggered.connect(self.newMaze)
         self.ui.actionExport_to_Obj.triggered.connect(self.MazeToObj)
 
+        # create a maze dir
+        if not os.path.isdir(DEFAULT_MAZE_DIR):
+            os.mkdir(DEFAULT_MAZE_DIR)
 
     # produce a new maze from the dialog
     def newMaze(self):
@@ -106,18 +111,26 @@ class MazeManagerApp(QtGui.QMainWindow):
         self.last_maze_dir = None
         self.ResetMaze()
         filename = data[0]
-
-        if filename == 0:
+        save_maze = True
+        if filename == 0 or filename == "":
             print "NO FILE"
-            return
+            filename = "MAZE NOT SAVED"
+            save_maze=False
         elif filename.split(".")[-1] != ".maze":
             filename += ".maze"
+            filename = os.path.join(DEFAULT_MAZE_DIR, filename)
 
-        newMaze = data[3].GenerateMaze(data[1], data[2])
+        if data[4]:
+            newMaze = data[3].GenerateMaze(data[1], data[2], weights=[
+                data[6], data[5], data[6], data[5]
+            ])
+        else:
+            newMaze = data[3].GenerateMaze(data[1], data[2])
         self.maze = newMaze
         self.mazeFile = filename
         data[3].SetStartEnd(self.maze)
-        self.maze.SaveMaze(self.mazeFile)
+        if save_maze:
+            self.maze.SaveMaze(self.mazeFile)
         self.RenderMaze()
 
         self.popup = None

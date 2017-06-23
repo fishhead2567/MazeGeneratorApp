@@ -162,6 +162,29 @@ class Maze:
                         problems.append([[row,column],2])
                         print "PROBLEM", row, column, 2, cell_borders, other_borders
 
+    # computes branching stats
+    # total number of brances [0]
+    # average branching factor [1]
+    # branch chance (percent chance a cell branches)
+
+    def BranchingStats(self):
+        branch_count = 0
+        move_count = 0
+        total_cells = self.height * self.width
+        # for each cell... make sure it agrees with its right most and bottom neighbor
+        for row in xrange(self.height):
+            for column in xrange(self.width):
+                cell_borders = self.GetBorders(row, column)
+                cell_branches = np.count_nonzero(cell_borders == 1)
+                move_count += cell_branches
+                if cell_branches > 2:
+                    branch_count += (cell_branches - 2)
+
+
+        branch_factor = float(move_count) / float(total_cells)
+        branch_chance = float(branch_count) / float(total_cells)
+        return branch_count, branch_factor, branch_chance
+
 def LoadMaze(filename):
     theMaze = Maze()
     with open(filename, "r") as fp:

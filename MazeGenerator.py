@@ -4,9 +4,11 @@ __author__ = 'best'
 import numpy as np
 from scipy.spatial.distance import euclidean
 from copy import copy, deepcopy
+from random import randint
 
 from Maze import Maze, LoadMaze
 from MazeSolver import AStarMazeSolver
+from RandomizationTools import ValueFromHeap
 
 """
 Abstract Maze Generator
@@ -25,12 +27,12 @@ class MazeGenerator(object):
 
         self.mMaxSteps = 10000
 
+
     def SetEndpointMethod(self, endpointMethod):
         if endpointMethod in self.mEndpointMethods:
             self.mEndpointMethod = endpointMethod
 
-
-    def GenerateMaze(self, width, height):
+    def GenerateMaze(self, width, height, weights=None):
         raise(NotImplementedError)
 
     def SetMaxSteps(self, steps):
@@ -246,100 +248,138 @@ class DepthFirstMazeGenerator(MazeGenerator):
     def __init__(self, endpointMethod=None, verbosity=0):
         super(DepthFirstMazeGenerator, self).__init__(endpointMethod, verbosity)
 
-    def GenerateMaze(self, width, height):
+    def GenerateMaze(self, width, height, weights=None):
+        # force weights to null for now
+
+        if weights is None:
+            use_weights = False
+            weights = [1,1,1,1]
+        else:
+            use_weights = True
+
         theMaze = Maze()
         theMaze.SetDimensions(width, height)
 
-        # treat the maze generation as a depth first search
-        # start with the top corner as the first cell
-        active_cells = []
-        dead_cells = []
-        active_cells.append([0, 0])
+        # REWRITTEN AS OF 6/23
+        used_cells = np.zeros([height,width])
+        walls = []
 
+        # depth first starts at top left
+        current_cell = [0,0]
+        used_cells[current_cell[0], current_cell[1]] = 1
 
-        while len(active_cells) > 0:
-            thisCell = active_cells[-1]
+        # create adjacency list
+        next_walls = []
+        borders = theMaze.GetBorders(current_cell)
+        for index in xrange(len(borders)):
+            if borders[index] == 0:
+                new_cell = deepcopy(current_cell)
+                if index == 0:
+                    new_cell[0] -= 1
+                elif index == 1:
+                    new_cell[1] += 1
+                elif index == 2:
+                    new_cell[0] += 1
+                elif index == 3:
+                    new_cell[1] -= 1
+                next_walls.append([weights[index], current_cell, new_cell, index])
+
+        if not use_weights:
+            while len(next_walls) > 0:
+                wall_idx = randint(0, len(next_walls)-1)
+                wall = next_walls[wall_idx]
+                next_walls.pop(wall_idx)
+                walls.append(wall)
+        else:
+            next_walls_heaped = []
+            while len(next_walls) > 0:
+                index, wall = ValueFromHeap(next_walls)
+                next_walls_heaped.append(wall)
+            next_walls_heaped.reverse()
+            walls += next_walls_heaped
+        # print "FIRST SET", adjacent_cells, maze_cells
+        while len(walls) > 0:
+            wall = walls[-1]
+            walls = walls[:-1]
 
             if self.mVerbosity > 0:
-                print "active cell", thisCell,
+                print "active wall (weight, from, to, direction): ", wall
 
-            # remove a wall from this cell
-            exits = theMaze.GetBorders(thisCell)
+            # ensure the cell this wall refers to is not in the maze
+            prior_cell = wall[1]
+            current_cell = wall[2]
 
-            # choose a random exit to open
-            walls = exits == 0
-            wallToOpen = None
-
-
-            choices = list(np.arange(4)[walls])
-            if self.mVerbosity > 0:
-                print "walls", choices
-
-            while wallToOpen is None and len(choices) > 0:
-                wallIndex = np.random.randint(len(choices))
-                wallToOpen = choices[wallIndex]
-                choices.pop(wallIndex)
-                newCell = deepcopy(thisCell)
-                # wallToOpen = np.random.choice(choices)
-                # choices.remove(wallToOpen)
-
-                if wallToOpen == 0:
-                    newCell[0] -= 1
-                elif wallToOpen == 1:
-                    newCell[1] += 1
-                elif wallToOpen == 2:
-                    newCell[0] += 1
-                else:
-                    newCell[1] -= 1
-
+            if used_cells[current_cell[0], current_cell[1]] ==1:
                 if self.mVerbosity > 0:
-                    print "    choose: ", wallToOpen, newCell, (wallToOpen + 2) % 4
+                    print "    to cell in maze"
+                continue
 
-                if newCell in active_cells or newCell in dead_cells:
-                    if self.mVerbosity > 0:
-                        print "        Bad choice", "Active" if newCell in active_cells else "Dead"
-                    wallToOpen = None
+            used_cells[current_cell[0], current_cell[1]] = 1
 
-            # if choice is none, we ran out of options
-            if wallToOpen is None:
-                active_cells.pop(-1)
-                dead_cells.append(thisCell)
+            # open the wall
+            wallToOpen = wall[3]
+            rWallToOpen = (wallToOpen + 2) % 4
+            theMaze.cells[prior_cell[0], prior_cell[1], wallToOpen] = 1
+            theMaze.cells[current_cell[0], current_cell[1], rWallToOpen] = 1
+
+            # create adjacency list
+            next_walls = []
+            borders = theMaze.GetBorders(current_cell)
+            for index in xrange(len(borders)):
+                if borders[index] == 0:
+                    new_cell = deepcopy(current_cell)
+                    if index == 0:
+                        new_cell[0] -= 1
+                    elif index == 1:
+                        new_cell[1] += 1
+                    elif index == 2:
+                        new_cell[0] += 1
+                    elif index == 3:
+                        new_cell[1] -= 1
+                    next_walls.append([weights[index], current_cell, new_cell, index])
+
+            if not use_weights:
+                while len(next_walls) > 0:
+                    wall_idx = randint(0, len(next_walls)-1)
+                    wall = next_walls[wall_idx]
+                    next_walls.pop(wall_idx)
+                    walls.append(wall)
             else:
-                # alright! neighbbor!
-                rWallToOpen = (wallToOpen + 2) % 4
-                # print "        open %d and %d" % (wallToOpen, rWallToOpen)
-                theMaze.cells[thisCell[0], thisCell[1], wallToOpen] = 1
-                theMaze.cells[newCell[0], newCell[1], rWallToOpen] = 1
+                next_walls_heaped = []
+                while len(next_walls) > 0:
+                    index, wall = ValueFromHeap(next_walls)
+                    next_walls_heaped.append(wall)
+                next_walls_heaped.reverse()
+                walls += next_walls_heaped
 
-                active_cells.append(newCell)
 
-            # if np.count_nonzero(exits > 0) >= 2:
-            #    active_cells.pop(-1)
-            #    dead_cells.append(thisCell)
 
-        # theMaze.end_cell = [0, 0]
-        # theMaze.start_cell = [theMaze.height -1, theMaze.width -1]
-        if self.mVerbosity > 0:
-            print
+        theMaze.end_cell = [0, 0]
+        theMaze.start_cell = [theMaze.height -1, theMaze.width -1]
         return theMaze
 
 class ModifiedPrimMazeGenerator(MazeGenerator):
     def __init__(self, endpointMethod=None, verbosity=0):
         super(ModifiedPrimMazeGenerator, self).__init__(endpointMethod, verbosity)
 
-    def GenerateMaze(self, width, height):
+    def GenerateMaze(self, width, height, weights=None):
+        if weights is None:
+            use_weights = False
+            weights = [1,1,1,1]
+        else:
+            use_weights = True
         theMaze = Maze()
         theMaze.SetDimensions(width, height)
 
-        # treat the maze generation as a depth first search
-        # start with the top corner as the first cell
-        maze_cells = []
-        adjacent_cells = {}
+        # REWRITTEN AS OF 6/23
+        # I wrote this from a cell list which prevented me from using bias terms and weights. I've rectified that
+        used_cells = np.zeros([height,width])
+        walls = []
 
         # choose a start cell
         current_cell = [np.random.randint(0, theMaze.height),
                         np.random.randint(0, theMaze.width)]
-        maze_cells.append("%d-%d" % (current_cell[0], current_cell[1]))
+        used_cells[current_cell[0], current_cell[1]] = 1
 
         # create adjacency list
         borders = theMaze.GetBorders(current_cell)
@@ -354,39 +394,45 @@ class ModifiedPrimMazeGenerator(MazeGenerator):
                     new_cell[0] += 1
                 elif index == 3:
                     new_cell[1] -= 1
-                cell_key = "%d-%d" % (new_cell[0], new_cell[1])
-                adjacent_cells[cell_key] = []
-                adjacent_cells[cell_key].append([current_cell, index])
+                walls.append([weights[index], current_cell, new_cell, index])
+
 
         # print "FIRST SET", adjacent_cells, maze_cells
-        while len(adjacent_cells) > 0:
-            # choose a cell to add to the maze at random
-            cell_key = np.random.randint(0, len(adjacent_cells))
-            cell_key = adjacent_cells.keys()[cell_key]
-            cell = adjacent_cells[cell_key]
-            del(adjacent_cells[cell_key])
-            maze_cells.append(cell_key)
-            cell_key = map(int, cell_key.split("-"))
+        while len(walls) > 0:
+            # choose a wall to open
+            if use_weights == False:
+                wall_idx = randint(0, len(walls)-1)
+                wall = walls[wall_idx]
+                walls.pop(wall_idx)
+
+            else:
+                index, wall = ValueFromHeap(walls)
 
             if self.mVerbosity > 0:
-                print "active cell: ", cell_key, "|", cell, len(cell)
+                print "active wall (weight, from, to, direction): ", wall
 
-            # choose a random edge from the set of edges connecting me
-            connectedCell = np.random.randint(0, len(cell))
-            connectedCell = cell[connectedCell]
-            wallToOpen = connectedCell[1]
+            # ensure the cell this wall refers to is not in the maze
+            prior_cell = wall[1]
+            current_cell = wall[2]
+
+            if used_cells[current_cell[0], current_cell[1]] ==1:
+                if self.mVerbosity > 0:
+                    print "    to cell in maze"
+                continue
+
+            used_cells[current_cell[0], current_cell[1]] = 1
+
+            # open the wall
+            wallToOpen = wall[3]
             rWallToOpen = (wallToOpen + 2) % 4
-            connectedCell = connectedCell[0]
-            if self.mVerbosity > 0:
-                print "    connect to", connectedCell, "by", wallToOpen,"-",rWallToOpen
+            theMaze.cells[prior_cell[0], prior_cell[1], wallToOpen] = 1
+            theMaze.cells[current_cell[0], current_cell[1], rWallToOpen] = 1
 
-            theMaze.cells[connectedCell[0], connectedCell[1], wallToOpen] = 1
-            theMaze.cells[cell_key[0], cell_key[1], rWallToOpen] = 1
-
-            borders = theMaze.GetBorders(cell_key)
+            # create adjacency list
+            borders = theMaze.GetBorders(current_cell)
             for index in xrange(len(borders)):
                 if borders[index] == 0:
-                    new_cell = deepcopy(cell_key)
+                    new_cell = deepcopy(current_cell)
                     if index == 0:
                         new_cell[0] -= 1
                     elif index == 1:
@@ -395,11 +441,9 @@ class ModifiedPrimMazeGenerator(MazeGenerator):
                         new_cell[0] += 1
                     elif index == 3:
                         new_cell[1] -= 1
-                    new_cell_key = "%d-%d" % (new_cell[0], new_cell[1])
-                    if new_cell_key not in maze_cells:
-                        if new_cell_key not in adjacent_cells:
-                            adjacent_cells[new_cell_key] = []
-                        adjacent_cells[new_cell_key].append([cell_key, index])
+                    walls.append([weights[index], current_cell, new_cell, index])
+
+
 
         theMaze.end_cell = [0, 0]
         theMaze.start_cell = [theMaze.height -1, theMaze.width -1]
@@ -408,27 +452,30 @@ class ModifiedPrimMazeGenerator(MazeGenerator):
 
 if __name__ == "__main__":
     # depth first
-    """
-    """
-    d = DepthFirstMazeGenerator("naive", verbosity=0)
-    m = d.GenerateMaze(15, 8, )
-    d.SetStartEnd(m)
-    # m.PrintMaze()
-    # m.SaveMaze("DepthFirst.maze")
-    # m = LoadMaze("DepthFirst.maze")
-    # m.PrintMaze()
-    m.CheckMaze()
 
 
-    """
-    # modified prims
-    d = ModifiedPrimMazeGenerator("naive", verbosity=0)
-    m = d.GenerateMaze(15, 8, )
-    d.SetStartEnd(m)
-    m.PrintMaze()
-    m.SaveMaze("mPrims_naive.maze")
-    m.CheckMaze()
+    MAZE_SIZE = [15, 30]
+    for generator_set in [
+        ("depth first", DepthFirstMazeGenerator("naive", verbosity=0), None),
+        ("depth first, horizontal weight", DepthFirstMazeGenerator("naive", verbosity=0), [1,4,1,2]),
+        ("prims", ModifiedPrimMazeGenerator("naive", verbosity=0), None),
+        ("prims, horizontal weight", ModifiedPrimMazeGenerator("naive", verbosity=0), [1,2,1,2])
+        ]:
+        print "-" * 50
+        print generator_set[0], "%d cells" % (MAZE_SIZE[1] * MAZE_SIZE[0])
+        d = generator_set[1]
+        m = d.GenerateMaze(MAZE_SIZE[1], MAZE_SIZE[0], generator_set[2])
+        d.SetStartEnd(m)
+        m.PrintMaze()
+        m.CheckMaze()
+        print "Branch stats", m.BranchingStats()
 
+        print
+
+    """
+
+    """
+    """
     d.SetMaxSteps(125)
     d.SetStartEndRandomAStar(m, None, None)
     m.PrintMaze()

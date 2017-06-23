@@ -37,9 +37,17 @@ Todo:
 * Enable panning on the maze.
 * Allow the view to be tied to the player solver.
 * Substantially reduce the hackiness of the rendering
+* Fix repetitions in the maze class. There are too many repeated blocks
 
 Changelog
 ---
+**V.2**
+
+-Added biasing to maze generation. Mazes can now be biased to vertical or horizontal corridors
+-Rewrote implementations for wall focus not cell focus. May reduce branching but much easier to deal with.
+-Added some randomization based on the roulette wheel algorithm
+
+
 **V.12**
 
 -Added option to export maze to OBJ in UI integrated CLI tool
